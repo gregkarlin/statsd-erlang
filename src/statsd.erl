@@ -9,7 +9,7 @@
 -export([increment/1, increment/2, decrement/1, decrement/2, count/2, count/3, gauge/2, timing/2, timing/3]).
 
 -define(STATSD_DEFAULT_PORT, 8125).
--define(STATSD_DEFAULT_HOST, "localhost").
+-define(STATSD_DEFAULT_HOST, "statsd.huffpo.net").
 
 %% holds all the relevant state that is used internally to pass the socket around
 -record(state, {
@@ -113,13 +113,12 @@ build_message({message, Key, Value, Type, Samplerate}) ->
 %% Internal: handles gen_server:call calls
 %%
 %% returns:	{reply, ok|error, State}
-handle_call({send_message, Message}, _From, State) ->
+handle_cast({send_message, Message}, State) ->
 	gen_udp:send(State#state.socket, State#state.host, State#state.port, Message),
-	{reply, ok, State};
+	{noreply, State}.
 handle_call(stop, _From, State) ->
 	gen_udp:close(State#state.socket),
 	{stop, normal, stopped, State}.
 	
 code_change(_OldVersion, State, _Extra) -> {ok, State}.
-handle_cast(_Message, State) -> {ok, State}.
 handle_info(_Info, State) -> {ok, State}.
